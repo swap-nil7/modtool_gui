@@ -92,8 +92,13 @@ class Ui_MainWindow(object):
         ##########################################################################
         # event functions
         ##########################################################################
-        self.add_run.clicked.connect(lambda: self.modtool_add())
         self.newmod_run.clicked.connect(lambda: self.modtool_newmod())
+        self.add_run.clicked.connect(lambda: self.modtool_add())
+        self.disable_run.clicked.connect(lambda: self.modtool_disable())
+        self.makeyaml_run.clicked.connect(lambda: self.modtool_makeyaml())
+        self.rename_run.clicked.connect(lambda: self.modtool_rename())
+        self.remove_run.clicked.connect(lambda: self.modtool_remove())
+        self.update_run.clicked.connect(lambda: self.modtool_update())
 
         self.retranslateUi(MainWindow)
         self.commands.setCurrentIndex(5)
@@ -469,18 +474,36 @@ class Ui_MainWindow(object):
         self.grid_common.addWidget(self.common_options, 0, 0, 1, 1)
         self.commands.addTab(self.common_params, "")
 
+    def modtool_common(self):
+        """ Common parameters for the ModTool Classes """
+        params = {};
+        params['directory'] = self.directory.text();
+        if not params['directory'] or params['directory'].isspace():
+            params['directory'] = "."
+        if self.skip_grc.isChecked():
+            params['skip_grc'] = True
+        if self.skip_python.isChecked():
+            params['skip_python'] = True
+        if self.skip_swig.isChecked():
+            params['skip_swig'] = True
+        if self.skip_lib.isChecked():
+            params['skip_lib'] = True
+        return params
+
     def modtool_newmod(self):
         """ Creates an Out of Tree module """
-        obj = ModToolNewModule()
+        obj_common_params = self.modtool_common()
+        obj = ModToolNewModule(**obj_common_params)
         obj.info['modname'] = self.newmod_modname.text();
         obj.run()
 
     def modtool_add(self):
         """ Adds a block to an OOT module """
-        obj = ModToolAdd()
+        obj_common_params = self.modtool_common()
+        obj = ModToolAdd(**obj_common_params)
         obj.info['blockname'] = self.add_blockname.text()
-        obj.info['blocktype'] = unicode(self.add_blocktype.currentText())
-        obj.info['lang'] = unicode(self.add_lang)
+        obj.info['blocktype'] = self.add_blocktype.currentText()
+        obj.info['lang'] = self.add_lang.currentText()
         obj.info['arglist'] = self.add_arglist.text()
         if self.add_py_qa.isChecked():
             obj.add_py_qa = True
@@ -488,7 +511,46 @@ class Ui_MainWindow(object):
             obj.add_cpp_qa = True
         obj.run()
 
+    def modtool_disable(self):
+        """ Disable a block """
+        obj_common_params = self.modtool_common()
+        obj = ModToolDisable(**obj_common_params)
+        obj.info['pattern'] = self.disable_blockname.text()
+        obj.run()
+
+    def modtool_makeyaml(self):
+        """ Make YAML file for GRC block bindings """
+        obj_common_params = self.modtool_common()
+        obj = ModToolMakeYAML(**obj_common_params)
+        obj.info['pattern'] = self.makeyaml_blockname.text()
+        obj.run()
+
+    def modtool_rename(self):
+        """ Rename a block in the out-of-tree module. """
+        obj_common_params = self.modtool_common()
+        obj = ModToolRename(**obj_common_params)
+        obj.info['oldname'] = self.rename_oldname.text()
+        obj.info['newname'] = self.rename_newname.text()
+        obj.run()
+
+    def modtool_remove(self):
+        """ Remove block (delete files and remove Makefile entries) """
+        obj_common_params = self.modtool_common()
+        obj = ModToolRemove(**obj_common_params)
+        obj.info['pattern'] = self.remove_blockname.text()
+        obj.run()
+
+    def modtool_update(self):
+        """ Update the grc bindings for a block """
+        obj_common_params = self.modtool_common()
+        obj = ModToolUpdate(**obj_common_params)
+        obj.info['blockname'] = self.update_blockname.text()
+        if self.update_all.isChecked():
+            obj.info['complete'] = True
+        obj.run()
+
     def retranslateUi(self, MainWindow):
+        """ translate the UI components """
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "gr-modtool"))
         self.newmod_options.setTitle(_translate("MainWindow", "Options"))
